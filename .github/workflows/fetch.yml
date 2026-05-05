@@ -1,8 +1,11 @@
 name: Fetch SSQ Data
 on:
   schedule:
-    - cron: '0 8 * * *'  
-  workflow_dispatch:     
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
