@@ -11,12 +11,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v4
       with:
         persist-credentials: false
-        sparse-checkout: |
-          fetch_ssq.py
-          .github/workflows/fetch.yml
 
     - name: Set up Python
       uses: actions/setup-python@v6
@@ -32,9 +29,12 @@ jobs:
       run: python fetch_ssq.py
 
     - name: Commit and push files
+      env:
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add 888.txt 888.xlsx 888.csv
-        git diff --staged --quiet || git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M:%S')"
+        git status
+        git diff --staged --quiet && echo "No changes to commit" || git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M:%S')"
         git push
