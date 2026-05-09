@@ -11,7 +11,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -25,10 +25,17 @@ jobs:
 
       - name: Run script
         run: python fetch_ssq.py
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
       - name: Commit files
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add -A
-          git diff --staged --quiet && echo "No changes" || git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M')" && git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M')"
+            git push
+          fi
