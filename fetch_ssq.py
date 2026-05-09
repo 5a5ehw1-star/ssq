@@ -2,6 +2,7 @@ import requests
 import os
 import time
 import sys
+from datetime import datetime
 
 URL = 'https://dl.laoge.nyc.mn/'
 TEST_FILE = "test_data.txt"
@@ -18,7 +19,7 @@ def fetch_data():
         print(f"Using local test file: {TEST_FILE}")
         with open(TEST_FILE, 'r', encoding='utf-8') as f:
             return f.read()
-    
+
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -26,12 +27,12 @@ def fetch_data():
         'Connection': 'keep-alive',
         'Referer': 'http://data.17500.cn/',
     }
-    
+
     os.environ['http_proxy'] = ''
     os.environ['https_proxy'] = ''
     os.environ['HTTP_PROXY'] = ''
     os.environ['HTTPS_PROXY'] = ''
-    
+
     last_error = None
     for attempt in range(1, MAX_RETRIES + 1):
         try:
@@ -56,12 +57,12 @@ def fetch_data():
             last_error = f"Content error: {e}"
         except requests.exceptions.RequestException as e:
             last_error = f"Request error: {e}"
-        
+
         print(f"  Attempt {attempt} failed: {last_error}", flush=True)
         if attempt < MAX_RETRIES:
             print(f"  Retrying in {RETRY_DELAY}s...", flush=True)
             time.sleep(RETRY_DELAY)
-    
+
     print(f"All {MAX_RETRIES} attempts failed. Last error: {last_error}", flush=True)
     sys.exit(1)
 
@@ -106,11 +107,14 @@ def main():
     records.reverse()
     records_888.reverse()
 
+    update_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     print(f"Writing {len(records)} records to {OUTPUT_TXT_ALL}...", flush=True)
     with open(OUTPUT_TXT_ALL, 'w', encoding='utf-8') as f:
         f.write("期号\t日期\t红球1\t红球2\t红球3\t红球4\t红球5\t红球6\t蓝球\n")
         for r in records:
             f.write(f"{r['period']}\t{r['date']}\t{r['red1']}\t{r['red2']}\t{r['red3']}\t{r['red4']}\t{r['red5']}\t{r['red6']}\t{r['blue']}\n")
+        f.write(f"\n# Updated at: {update_time}\n")
     print(f"Text file saved: {OUTPUT_TXT_ALL}", flush=True)
 
     print(f"Writing {len(records_888)} records to {OUTPUT_TXT_888}...", flush=True)
@@ -118,6 +122,7 @@ def main():
         f.write("期号\t日期\t红球1\t红球2\t红球3\t红球4\t红球5\t红球6\t蓝球\n")
         for r in records_888:
             f.write(f"{r['period']}\t{r['date']}\t{r['red1']}\t{r['red2']}\t{r['red3']}\t{r['red4']}\t{r['red5']}\t{r['red6']}\t{r['blue']}\n")
+        f.write(f"\n# Updated at: {update_time}\n")
     print(f"Text file saved: {OUTPUT_TXT_888}", flush=True)
     print("Done!", flush=True)
 
