@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -28,21 +29,8 @@ jobs:
       - name: Run script
         run: python fetch_ssq.py
 
-      - name: Commit and push
-        run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          git add -A
-          echo "=== Git Status ==="
-          git status
-          echo "=== Staged Changes ==="
-          git diff --staged --stat || true
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M')"
-            echo "=== Pushing to ${{ github.repository }} ==="
-            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
-            git push origin HEAD:${{ github.ref_name }}
-            echo "Push completed!"
-          fi
+      - uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: Update SSQ data
+          commit_user_name: GitHub Action
+          commit_user_email: action@github.com
