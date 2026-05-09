@@ -34,10 +34,15 @@ jobs:
           python fetch_ssq.py 2>&1 || { echo "Script failed"; exit 1; }
           echo "=== Script completed successfully ==="
 
-      - name: Show git status before commit
+      - name: Pull latest changes before commit
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
+          echo "=== Pulling latest changes ==="
+          git pull origin ${{ github.ref_name }} --rebase
+
+      - name: Show git status before commit
+        run: |
           echo "=== Git Status ==="
           git status
           echo "=== Git Diff ==="
@@ -49,6 +54,3 @@ jobs:
           commit_message: Update SSQ data
           commit_user_name: GitHub Action
           commit_user_email: action@github.com
-          skip_fetch: true
-          skip_checkout: false
-          push_options: --force-with-lease
