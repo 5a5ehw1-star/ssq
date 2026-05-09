@@ -10,10 +10,14 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          persist-credentials: true
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -21,14 +25,36 @@ jobs:
           python-version: '3.11'
 
       - name: Install dependencies
-        run: pip install requests openpyxl
+        run: pip install requests
+
+      - name: Delete existing files if they exist
+        run: |
+          rm -f 888.txt all.txt
+          echo "Deleted existing files if any"
 
       - name: Run script
-        run: python fetch_ssq.py
-
-      - name: Commit files
         run: |
-          git config user.name "GitHub Action"
-          git config user.email "action@github.com"
-          git add -A
-          git diff --staged --quiet && echo "No changes" || git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M')" && git push
+          echo "=== Running Python script ==="
+          python fetch_ssq.py 2>&1 || { echo "Script failed"; exit 1; }
+          echo "=== Script completed ==="
+
+      - name: Pull latest changes before commit
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          echo "=== Pulling latest changes ==="
+          git pull origin ${{ github.ref_name }} --rebase
+
+      - name: Show git status
+        run: |
+          echo "=== Git Status ==="
+          git status
+          echo "=== Git Diff ==="
+          git diff
+
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: Update SSQ data
+          commit_user_name: GitHub Action
+          commit_user_email: action@github.com
