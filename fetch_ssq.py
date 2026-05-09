@@ -88,7 +88,7 @@ def parse_line(line):
 def main():
     content = fetch_data()
     lines = content.strip().split('\n')
-    print(f"Total records: {len(lines)}")
+    print(f"Total records: {len(lines)}", flush=True)
 
     records = []
     for line in lines:
@@ -100,28 +100,30 @@ def main():
         print("Error: No valid records found in the data!", flush=True)
         sys.exit(1)
 
-    print(f"Taking last {COUNT} records (newest data)")
+    print(f"Taking last {COUNT} records (newest data)", flush=True)
     records_888 = records[-COUNT:]
 
     records.reverse()
     records_888.reverse()
 
+    print(f"Writing {len(records)} records to {OUTPUT_TXT_ALL}...", flush=True)
     with open(OUTPUT_TXT_ALL, 'w', encoding='utf-8') as f:
         f.write("期号\t日期\t红球1\t红球2\t红球3\t红球4\t红球5\t红球6\t蓝球\n")
         for r in records:
             f.write(f"{r['period']}\t{r['date']}\t{r['red1']}\t{r['red2']}\t{r['red3']}\t{r['red4']}\t{r['red5']}\t{r['red6']}\t{r['blue']}\n")
-    print(f"Text file saved: {OUTPUT_TXT_ALL}")
+    print(f"Text file saved: {OUTPUT_TXT_ALL}", flush=True)
 
+    print(f"Writing {len(records_888)} records to {OUTPUT_TXT_888}...", flush=True)
     with open(OUTPUT_TXT_888, 'w', encoding='utf-8') as f:
         f.write("期号\t日期\t红球1\t红球2\t红球3\t红球4\t红球5\t红球6\t蓝球\n")
         for r in records_888:
             f.write(f"{r['period']}\t{r['date']}\t{r['red1']}\t{r['red2']}\t{r['red3']}\t{r['red4']}\t{r['red5']}\t{r['red6']}\t{r['blue']}\n")
-    print(f"Text file saved: {OUTPUT_TXT_888}")
-    print("Done!")
+    print(f"Text file saved: {OUTPUT_TXT_888}", flush=True)
+    print("Done!", flush=True)
 
 if __name__ == "__main__":
     try:
         main()
     except Exception as e:
-        print(f"Unexpected error: {e}")
+        print(f"Unexpected error: {e}", flush=True)
         sys.exit(1)
