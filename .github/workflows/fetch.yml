@@ -10,6 +10,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v5
         with:
@@ -25,17 +27,22 @@ jobs:
 
       - name: Run script
         run: python fetch_ssq.py
-        env:
-          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
-      - name: Commit files
+      - name: Commit and push
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
           git add -A
+          echo "=== Git Status ==="
+          git status
+          echo "=== Staged Changes ==="
+          git diff --staged --stat || true
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
             git commit -m "Update SSQ data $(date +'%Y-%m-%d %H:%M')"
-            git push
+            echo "=== Pushing to ${{ github.repository }} ==="
+            git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+            git push origin HEAD:${{ github.ref_name }}
+            echo "Push completed!"
           fi
