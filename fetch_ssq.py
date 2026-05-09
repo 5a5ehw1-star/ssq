@@ -1,5 +1,7 @@
 import requests
 import os
+import time
+import sys
 
 URL = 'https://dl.laoge.nyc.mn/'
 TEST_FILE = "test_data.txt"
@@ -7,6 +9,9 @@ TEST_FILE = "test_data.txt"
 OUTPUT_TXT_888 = "888.txt"
 OUTPUT_TXT_ALL = "all.txt"
 COUNT = 888
+MAX_RETRIES = 3
+RETRY_DELAY = 5
+REQUEST_TIMEOUT = 20
 
 def fetch_data():
     if os.path.exists(TEST_FILE):
@@ -22,19 +27,43 @@ def fetch_data():
         'Referer': 'http://data.17500.cn/',
     }
     
-    print(f"Fetching data from {URL}...")
-    
     os.environ['http_proxy'] = ''
     os.environ['https_proxy'] = ''
     os.environ['HTTP_PROXY'] = ''
     os.environ['HTTPS_PROXY'] = ''
     
-    session = requests.Session()
-    session.trust_env = False
-    response = session.get(URL, headers=headers, timeout=30, proxies={})
-    response.raise_for_status()
-    print("Success!")
-    return response.text
+    last_error = None
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            print(f"Fetching data from {URL} (attempt {attempt}/{MAX_RETRIES})...", flush=True)
+            session = requests.Session()
+            session.trust_env = False
+            response = session.get(URL, headers=headers, timeout=REQUEST_TIMEOUT, proxies={})
+            print(f"  Response status: {response.status_code}, content length: {len(response.text)}", flush=True)
+            response.raise_for_status()
+            content = response.text
+            if not content or not content.strip():
+                raise ValueError("Empty response content")
+            print("Success!", flush=True)
+            return content
+        except requests.exceptions.Timeout as e:
+            last_error = f"Timeout error (>{REQUEST_TIMEOUT}s): {e}"
+        except requests.exceptions.ConnectionError as e:
+            last_error = f"Connection error: {e}"
+        except requests.exceptions.HTTPError as e:
+            last_error = f"HTTP error {response.status_code}: {e}"
+        except ValueError as e:
+            last_error = f"Content error: {e}"
+        except requests.exceptions.RequestException as e:
+            last_error = f"Request error: {e}"
+        
+        print(f"  Attempt {attempt} failed: {last_error}", flush=True)
+        if attempt < MAX_RETRIES:
+            print(f"  Retrying in {RETRY_DELAY}s...", flush=True)
+            time.sleep(RETRY_DELAY)
+    
+    print(f"All {MAX_RETRIES} attempts failed. Last error: {last_error}", flush=True)
+    sys.exit(1)
 
 def parse_line(line):
     parts = line.split()
@@ -67,6 +96,10 @@ def main():
         if record:
             records.append(record)
 
+    if not records:
+        print("Error: No valid records found in the data!", flush=True)
+        sys.exit(1)
+
     print(f"Taking last {COUNT} records (newest data)")
     records_888 = records[-COUNT:]
 
@@ -87,4 +120,8 @@ def main():
     print("Done!")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Unexpected error: {e}")
+        sys.exit(1)
